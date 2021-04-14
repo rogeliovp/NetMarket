@@ -41,11 +41,19 @@ namespace WebAPI
             });
 
             services.AddTransient<IProductoRepository, ProductoRepository>();
-
             services.AddControllers();
+
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "WebAPI", Version = "v1" });
+            });
+
+            services.AddCors(opt =>
+            {
+                opt.AddPolicy("CorsRule", rule =>
+                {
+                    rule.AllowAnyHeader().AllowAnyMethod().WithOrigins("*");
+                });
             });
         }
 
@@ -64,6 +72,8 @@ namespace WebAPI
             app.UseStatusCodePagesWithReExecute("/errors", "?code={0}");
 
             app.UseRouting();
+
+            app.UseCors("CorsRule");
 
             app.UseAuthorization();
 
