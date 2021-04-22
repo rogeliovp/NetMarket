@@ -1,6 +1,7 @@
-import { Button, Card, Container, Grid, MenuItem, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@material-ui/core';
-import React, { useState } from 'react';
+import { Button, Card, Container, Dialog, DialogContent, DialogTitle, Grid, MenuItem, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@material-ui/core';
+import React, { useEffect, useState } from 'react';
 import useStyles from '../../theme/useStyle';
+import { agregarLibro, editarLibro, eliminarLibro, listarLibros, obtenerLibroKey } from '../data/libros';
 
 const clearLibro = {
     categoria: '',
@@ -24,16 +25,63 @@ const Libro = () => {
     }
 
     const guardarData = () => {
-        console.log("Mis datos son ", libro);
+        agregarLibro(libro);
         setLibro(clearLibro);
     }
 
-    const abrirDialog = () => {
-        console.log("Mi boton editar");
+    const [librosArray, setLibrosArray] = useState([])
+
+    const listarDataLibros = () => {
+        const data = listarLibros();
+        setLibrosArray(data);
     }
 
-    const eliminarData = () => {
+    useEffect(() => {
+        listarDataLibros();
+    }, [librosArray.length])
+
+    const abrirDialog = (key) => {
+        setOpen(true);
+        const dataLibro = obtenerLibroKey(key);
+        setLibroEdita({
+            key: key,
+            categoriaE: dataLibro.categoria,
+            tituloE: dataLibro.titulo,
+            autorE: dataLibro.autor
+        })
+    }
+
+    const eliminarData = (data) => {
+        const listaNuevaLibros = eliminarLibro(data);
+        setLibrosArray(listaNuevaLibros);
         console.log("boton eliminar");
+    }
+
+    const [libroEdita, setLibroEdita] = useState({
+        key: 0,
+        categoriaE: '',
+        tituloE: '',
+        autorE: ''
+    })
+
+    const handleChangeEdita = (e) => {
+        const {name, value} = e.target;
+        setLibroEdita(prev => ({
+            ...prev,
+            [name]: value
+        }))
+    }
+
+    const [open, setOpen] = useState(false);
+
+    const cerrarDialog = () => {
+        setOpen(false);
+    }
+
+    const editarData = () => {
+        const nuevaData = editarLibro(libroEdita);
+        console.log("boton editar data ", nuevaData);
+        cerrarDialog();
     }
 
     const classes = useStyles();
@@ -108,30 +156,86 @@ const Libro = () => {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        <TableRow>
-                            <TableCell>Programacion</TableCell>
-                            <TableCell>React Avanzado</TableCell>
-                            <TableCell>Rogelio vilches</TableCell>
-                            <TableCell>
-                                <Button
-                                variant="contained"
-                                color="primary"
-                                onClick={abrirDialog}>
-                                    Editar
-                                </Button>
-                            </TableCell>
-                            <TableCell>
-                                <Button
-                                variant="contained"
-                                color="secondary"
-                                onClick={eliminarData}>
-                                    Eliminar
-                                </Button>
-                            </TableCell>
-                        </TableRow>
+                        { librosArray.map((libroObj) => (
+                            <TableRow key={libroObj.key}>
+                                <TableCell>{libroObj.categoria}</TableCell>
+                                <TableCell>{libroObj.titulo}</TableCell>
+                                <TableCell>{libroObj.autor}</TableCell>
+                                <TableCell>
+                                    <Button
+                                    variant="contained"
+                                    color="primary"
+                                    onClick={() => abrirDialog(libroObj.key)}>
+                                        Editar
+                                    </Button>
+                                </TableCell>
+                                <TableCell>
+                                    <Button
+                                    variant="contained"
+                                    color="secondary"
+                                    onClick={() => eliminarData(libroObj)}>
+                                        Eliminar
+                                    </Button>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                        
                     </TableBody>
                 </Table>
             </TableContainer>
+            <Dialog open={open} onClose={cerrarDialog} maxWidth="xs"
+            fullWidth aligm="center">
+                <DialogTitle>Editar Libro</DialogTitle>
+                <DialogContent>
+                    <form onSubmit={(e) => e.preventDefault()}>
+                        <TextField
+                        select
+                        label="Categoría"
+                        variant="outlined"
+                        fullWidth
+                        className={classes.gridmb}
+                        align="left"
+                        name="categoriaE"
+                        value={libroEdita.categoriaE}
+                        onChange={handleChangeEdita}
+                        >
+                            <MenuItem value="Programacion">Programacion</MenuItem>
+                            <MenuItem value="Historia">Historia</MenuItem>
+                            <MenuItem value="Matematica">Matematica</MenuItem>
+                        </TextField>
+
+                        <TextField 
+                        label="Titulo"
+                        variant="outlined"
+                        fullWidth
+                        className={classes.gridmb}
+                        name="tituloE"
+                        value={libroEdita.tituloE}
+                        onChange={handleChangeEdita}
+                        />
+
+                        <TextField 
+                        label="Autor"
+                        variant="outlined"
+                        fullWidth
+                        className={classes.gridmb}
+                        name="autorE"
+                        value={libroEdita.autorE}
+                        onChange={handleChangeEdita}
+                        />
+
+                        <Button
+                        variant="contained"
+                        fullWidth
+                        color="primary"
+                        className={classes.gridmb}
+                        type="submit"
+                        onClick={editarData}>
+                            Guardar
+                        </Button>
+                    </form>
+                </DialogContent>
+            </Dialog>
         </Container>
     );
 };
